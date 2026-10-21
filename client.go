@@ -61,26 +61,35 @@ type Client struct {
 
 // New validates cfg and returns a client.
 func New(cfg Config) (*Client, error) {
-	if cfg.BaseURL == "" {
-		return nil, errors.New("sourceapi: BaseURL is required")
+	base := strings.TrimSpace(cfg.BaseURL)
+	if base == "" {
+		return nil, errors.New("sourceapi: the address of the hub is required")
 	}
-	u, err := url.Parse(cfg.BaseURL)
+	if !strings.Contains(base, "://") {
+		// A bare address (192.168.1.50:8081) is an http one: the person
+		// typing it should not have to know about the schemes.
+		base = "http://" + base
+	}
+	u, err := url.Parse(base)
 	if err != nil {
-		return nil, fmt.Errorf("sourceapi: BaseURL: %w", err)
+		return nil, fmt.Errorf("sourceapi: the address of the hub %q is not an address: %w", cfg.BaseURL, err)
 	}
 	if u.Scheme != "http" && u.Scheme != "https" {
-		return nil, fmt.Errorf("sourceapi: BaseURL scheme %q is not http(s)", u.Scheme)
+		return nil, fmt.Errorf("sourceapi: the address of the hub %q has to be http:// or https://", cfg.BaseURL)
+	}
+	if u.Host == "" {
+		return nil, fmt.Errorf("sourceapi: the address of the hub %q has no host", cfg.BaseURL)
 	}
 	if strings.TrimSpace(cfg.Token) == "" {
-		return nil, errors.New("sourceapi: source token is required")
+		return nil, errors.New("sourceapi: the token of the source is required")
 	}
 	httpClient := cfg.HTTPClient
 	if httpClient == nil {
 		httpClient = &http.Client{}
 	}
 	return &Client{
-		base:  strings.TrimRight(cfg.BaseURL, "/"),
-		token: cfg.Token,
+		base:  strings.TrimRight(base, "/"),
+		token: strings.TrimSpace(cfg.Token),
 		http:  httpClient,
 	}, nil
 }
