@@ -69,12 +69,24 @@ for {
 The token identifies the source: it is bound to one source of one hub, and
 a source only ever publishes its own devices and receives its own commands.
 
-## Domains
+## The entity type catalog
 
-The domain of an entity says what it can do (`light`, `sensor`, `camera`,
-`lock`, ...). The hub has the catalog of them
-(`GET /api/v1/entity-types`); a provider publishes the domain, the device
-classes it uses, its capabilities and the commands it accepts.
+The `catalog` package is the vocabulary of the model: for every domain, how
+its state looks like, which device classes it has, which capabilities it
+supports and the commands a client can send.
+
+```go
+import "github.com/matiasdelellis/zaguan-sourceapi/catalog"
+
+light, ok := catalog.Lookup(catalog.DomainLight)
+light.Commands   // turn_on, turn_off, toggle, set_brightness, ...
+```
+
+A provider publishes the domain, the device classes it uses, its
+capabilities and its commands; the hub renders the entity from the catalog
+and **refuses a domain it does not know**, so an invented name does not turn
+into a device nobody can control. The hub serves the same catalog at
+`GET /api/v1/entity-types`.
 
 ## Dependencies
 
