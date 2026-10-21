@@ -116,6 +116,10 @@ type HeartbeatResponse struct {
 	OK           bool `json:"ok"`
 	Online       bool `json:"online"`
 	LeaseSeconds int  `json:"lease_seconds"`
+	// Devices is how many devices the hub has for this source. The source
+	// compares it with what it published: when they differ, the hub lost
+	// its state (it restarted) and the source has to publish again.
+	Devices int `json:"devices"`
 }
 
 // Command is one command delivered by the hub long poll.
