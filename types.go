@@ -36,18 +36,44 @@ import "time"
 
 // Device is one physical device in a source snapshot.
 type Device struct {
-	UniqueID     string         `json:"unique_id"`
-	Name         string         `json:"name,omitempty"`
-	Manufacturer string         `json:"manufacturer,omitempty"`
-	Model        string         `json:"model,omitempty"`
-	SWVersion    string         `json:"sw_version,omitempty"`
-	HWVersion    string         `json:"hw_version,omitempty"`
-	AreaID       string         `json:"area_id,omitempty"`
-	Labels       []string       `json:"labels,omitempty"`
-	Identifiers  []string       `json:"identifiers,omitempty"`
-	Connections  []string       `json:"connections,omitempty"`
-	Disabled     bool           `json:"disabled,omitempty"`
-	Metadata     map[string]any `json:"metadata,omitempty"`
+	UniqueID     string   `json:"unique_id"`
+	Name         string   `json:"name,omitempty"`
+	Manufacturer string   `json:"manufacturer,omitempty"`
+	Model        string   `json:"model,omitempty"`
+	SWVersion    string   `json:"sw_version,omitempty"`
+	HWVersion    string   `json:"hw_version,omitempty"`
+	AreaID       string   `json:"area_id,omitempty"`
+	Labels       []string `json:"labels,omitempty"`
+	Identifiers  []string `json:"identifiers,omitempty"`
+	Connections  []string `json:"connections,omitempty"`
+	Disabled     bool     `json:"disabled,omitempty"`
+	// Hidden keeps the device out of the family app, with all of its
+	// entities. The hub may change it: it is a suggestion, not a decision.
+	Hidden bool `json:"hidden,omitempty"`
+	// Favorite pins the device to the front of the app. The hub may change
+	// it: it is a suggestion, not a decision.
+	Favorite bool           `json:"favorite,omitempty"`
+	Metadata map[string]any `json:"metadata,omitempty"`
+}
+
+// History is the summary of a value over a window: the minimum, the maximum
+// and the average, with the number of samples.
+//
+// The source knows its own history. The summary travels with the snapshot
+// so every client can show the extremes of a reading without asking
+// anybody.
+type History struct {
+	Hours int     `json:"hours"`
+	Min   float64 `json:"min"`
+	Max   float64 `json:"max"`
+	Avg   float64 `json:"avg"`
+	Count int     `json:"count"`
+}
+
+// Point is one sample of a series.
+type Point struct {
+	Time  time.Time `json:"t"`
+	Value float64   `json:"v"`
 }
 
 // Entity is one capability in a source snapshot.
@@ -68,13 +94,35 @@ type Entity struct {
 	Available      *bool          `json:"available,omitempty"`
 	Hidden         bool           `json:"hidden,omitempty"`
 	Disabled       bool           `json:"disabled,omitempty"`
-	LastUpdated    time.Time      `json:"last_updated,omitempty"`
+	// Favorite pins the entity to the front of the app. The hub may change
+	// it: it is a suggestion, not a decision.
+	Favorite    bool      `json:"favorite,omitempty"`
+	LastUpdated time.Time `json:"last_updated,omitempty"`
+	// History is the summary of the value over a few windows, when the
+	// source keeps a history. It is not the history: it is its extremes.
+	History []History `json:"history,omitempty"`
+	// Series is the last day of the value, for the mini graph of the card.
+	// The hub caches it and does not keep more.
+	Series []Point `json:"series,omitempty"`
 }
 
-// Area is a room hint.
+// Area is a room of the house, as the source knows it.
+//
+// The hub owns the rooms: it resolves the ones of every source into its own
+// list, and the user can change the name, the order, the icon and the
+// visibility of a room. A source that publishes the same room with a
+// different name does not rename it.
 type Area struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
+	// Icon is the symbol of the room, when it has one.
+	Icon string `json:"icon,omitempty"`
+	// Order is the position of the room in the list.
+	Order int `json:"order,omitempty"`
+	// Hidden keeps the room out of the list of the app.
+	Hidden bool `json:"hidden,omitempty"`
+	// Favorite pins the room to the front.
+	Favorite bool `json:"favorite,omitempty"`
 }
 
 // Snapshot is the full state sent on connect. Version must increase.
