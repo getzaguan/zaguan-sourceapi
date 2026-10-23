@@ -119,6 +119,11 @@ func (c *Client) Heartbeat(ctx context.Context) (HeartbeatResponse, error) {
 	return out, err
 }
 
+// commandTimeoutMargin is how long the client waits after the hub's long
+// poll window before giving up. It is a variable so the tests can shorten
+// it.
+var commandTimeoutMargin = 15 * time.Second
+
 // Commands long-polls the hub for commands. A 204 means no command.
 func (c *Client) Commands(ctx context.Context, wait time.Duration) ([]Command, error) {
 	if wait <= 0 {
@@ -127,6 +132,11 @@ func (c *Client) Commands(ctx context.Context, wait time.Duration) ([]Command, e
 	if wait > 60*time.Second {
 		wait = 60 * time.Second
 	}
+	// The hub may keep the request open for `wait`, but it must answer
+	// within a margin: a hub that accepted the connection and then stalled
+	// would otherwise block the provider forever.
+	ctx, cancel := withTimeoutFor(ctx, wait+commandTimeoutMargin)
+	defer cancel()
 	query := url.Values{}
 	query.Set("wait", wait.String())
 	path := "/api/v1/source/commands?" + query.Encode()
@@ -215,6 +225,15 @@ func withTimeout(ctx context.Context) (context.Context, context.CancelFunc) {
 		return context.WithCancel(ctx)
 	}
 	return context.WithTimeout(ctx, 30*time.Second)
+}
+
+// withTimeoutFor is withTimeout with a caller-chosen duration. It keeps a
+// deadline the caller already set.
+func withTimeoutFor(ctx context.Context, timeout time.Duration) (context.Context, context.CancelFunc) {
+	if _, ok := ctx.Deadline(); ok {
+		return context.WithCancel(ctx)
+	}
+	return context.WithTimeout(ctx, timeout)
 }
 
 // String makes logs friendlier without exposing the token.

@@ -359,7 +359,7 @@ func Default() *Catalog {
 		Domain:       DomainCover,
 		Description:  "Blind, shutter or garage door",
 		StateType:    StateTypeEnum,
-		States:       []string{"open", "closed", "opening", "closing"},
+		States:       []string{"open", "closed", "opening", "closing", "stopped"},
 		Capabilities: []string{"position"},
 		Commands: []CommandSpec{
 			cmd("open_cover"),

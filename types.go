@@ -7,7 +7,7 @@
 //
 // The client is shared: every provider imports it, so the contract is
 // implemented once. It lives in its own repository
-// (github.com/matiasdelellis/zaguan-sourceapi); the contract itself is in
+// (github.com/getzaguan/zaguan-sourceapi); the contract itself is in
 // docs/source-api.md of the Zaguán repository.
 //
 //	hub, err := sourceapi.New(sourceapi.Config{
@@ -86,14 +86,17 @@ type Entity struct {
 	State          any            `json:"state,omitempty"`
 	Attributes     map[string]any `json:"attributes,omitempty"`
 	Capabilities   []string       `json:"capabilities,omitempty"`
-	Commands       []string       `json:"commands,omitempty"`
-	Unit           string         `json:"unit,omitempty"`
-	StateClass     string         `json:"state_class,omitempty"`
-	Category       string         `json:"category,omitempty"`
-	Assumed        bool           `json:"assumed,omitempty"`
-	Available      *bool          `json:"available,omitempty"`
-	Hidden         bool           `json:"hidden,omitempty"`
-	Disabled       bool           `json:"disabled,omitempty"`
+	// Commands is the list of commands the entity takes. The contract is:
+	// an omitted/null list asks the hub for the catalog defaults (legacy
+	// sources); an explicit empty list means the entity is read-only.
+	Commands   []string `json:"commands"`
+	Unit       string   `json:"unit,omitempty"`
+	StateClass string   `json:"state_class,omitempty"`
+	Category   string   `json:"category,omitempty"`
+	Assumed    bool     `json:"assumed,omitempty"`
+	Available  *bool    `json:"available,omitempty"`
+	Hidden     bool     `json:"hidden,omitempty"`
+	Disabled   bool     `json:"disabled,omitempty"`
 	// Favorite pins the entity to the front of the app. The hub may change
 	// it: it is a suggestion, not a decision.
 	Favorite    bool      `json:"favorite,omitempty"`

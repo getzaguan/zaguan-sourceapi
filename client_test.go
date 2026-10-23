@@ -1,6 +1,36 @@
 package sourceapi
 
-import "testing"
+import (
+	"context"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
+)
+
+// TestCommandsHasATimeout checks that a hub that accepts the long poll and
+// then stalls does not block the provider forever.
+func TestCommandsHasATimeout(t *testing.T) {
+	old := commandTimeoutMargin
+	commandTimeoutMargin = 20 * time.Millisecond
+	defer func() { commandTimeoutMargin = old }()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		<-r.Context().Done()
+	}))
+	defer srv.Close()
+	client, err := New(Config{BaseURL: srv.URL, Token: "token"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	start := time.Now()
+	if _, err := client.Commands(context.Background(), 10*time.Millisecond); err == nil {
+		t.Fatal("the stalled long poll did not time out")
+	}
+	if elapsed := time.Since(start); elapsed > time.Second {
+		t.Fatalf("the long poll took %v to time out", elapsed)
+	}
+}
 
 // TestNewAcceptsBareAddresses checks that a person who types an address
 // without the scheme does not get a cryptic error.
