@@ -287,11 +287,14 @@ func Default() *Catalog {
 		Description:  "Camera stream and snapshots",
 		StateType:    StateTypeEnum,
 		States:       []string{"idle", "streaming"},
-		Capabilities: []string{"live", "snapshot", "recording"},
+		Capabilities: []string{"live", "snapshot", "recording", "ptz"},
 		Commands: []CommandSpec{
 			cmd("snapshot"),
 			cmd("stream_start"),
 			cmd("stream_stop"),
+			cmdCap("ptz_move", "ptz", numArg("pan", -180, 180, "°"), numArg("tilt", -90, 90, "°")),
+			cmdCap("ptz_home", "ptz"),
+			cmdCap("ptz_recalibrate", "ptz"),
 		},
 	})
 
